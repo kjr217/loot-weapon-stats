@@ -9,21 +9,21 @@ import "../interfaces/ILoot.sol";
 import "./Base64.sol";
 
 /**
- * @title  LootWeapon
+ * @title  LootChestArmor
  * @author kjr217
  * @notice Looters! Come and collect your arms! War is upon us, we must fight!
- *         The Weaponsmith is open. Looters will be able to mint their weapons and reveal their underlying powers
- *         - attack, defense, durability, weight and magic. Mint your weapon, reveal your stats.
+ *         The Weaponsmith is open. Looters will be able to mint their chest armor and reveal their underlying powers
+ *         - defense, durability, weight and magic. Mint your chest armor, reveal your stats.
  */
-contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
+contract LootChestArmor is ERC721Enumerable, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
     // OG loot contract
     ILoot loot = ILoot(0xFF9C1b15B16263C61d017ee9F65C50e4AE0113D7);
     // Token used as the trade in for the weaponSmith
     IERC20 public token;
-    // Mapping containing the weaponSmith's records on upgraded weapons
+    // Mapping containing the weaponSmith's records on upgraded chest Armor
     mapping(uint256 => uint256) public boosts;
-    // Mapping containing the base stats on all weapon classes
+    // Mapping containing the base stats on all chest armor classes
     mapping(uint8 => uint16[5]) public bases;
     // coefficient applied to weaponSmith
     uint256 boostCoefficient;
@@ -35,25 +35,22 @@ contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
     event BoostCoefficientUpdated(uint256 oldBoostCoefficient, uint256 newBoostCoefficient);
     event WeaponSmithOpen(bool open);
 
-    string[] private weapons = [
-        "Warhammer",
-        "Quarterstaff",
-        "Maul",
-        "Mace",
-        "Club",
-        "Katana",
-        "Falchion",
-        "Scimitar",
-        "Long Sword",
-        "Short Sword",
-        "Ghost Wand",
-        "Grave Wand",
-        "Bone Wand",
-        "Wand",
-        "Grimoire",
-        "Chronicle",
-        "Tome",
-        "Book"
+    string[] private chestArmor = [
+        "Divine Robe",
+        "Silk Robe",
+        "Linen Robe",
+        "Robe",
+        "Shirt",
+        "Demon Husk",
+        "Dragonskin Armor",
+        "Studded Leather Armor",
+        "Hard Leather Armor",
+        "Leather Armor",
+        "Holy Chestplate",
+        "Ornate Chestplate",
+        "Plate Mail",
+        "Chain Mail",
+        "Ring Mail"
     ];
     string[] private namePrefixes = [
         "Agony", "Apocalypse", "Armageddon", "Beast", "Behemoth", "Blight", "Blood", "Bramble",
@@ -144,35 +141,31 @@ contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
         return uint256(keccak256(abi.encodePacked(input)));
     }
 
-    function getWeapon(uint256 tokenId) public view returns (string memory) {
-        return loot.getWeapon(tokenId);
-    }
-
-    function getAttack(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "Attack", weapons, 0);
+    function getChestArmor(uint256 tokenId) public view returns (string memory) {
+        return loot.getChest(tokenId);
     }
     
     function getDefense(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "Defense", weapons, 1);
+        return pluck(tokenId, "Defense", chestArmor, 0);
     }
 
     function getDurability(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "Durability", weapons, 2);
+        return pluck(tokenId, "Durability", chestArmor, 1);
     }
 
     function getWeight(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "Weight", weapons, 3);
+        return pluck(tokenId, "Weight", chestArmor, 2);
     }
 
     function getMagic(uint256 tokenId) public view returns (string memory) {
-        return pluck(tokenId, "Magic", weapons, 4);
+        return pluck(tokenId, "Magic", chestArmor, 3);
     }
 
     /**
      * @notice score calculator
-     * @param  base the base amount taken from bases for the weapon class
+     * @param  base the base amount taken from bases for the class
      * @param  tokenId id of the token being scored
-     * @param  output weapon class or description
+     * @param  output class or description
      */
     function getScore(uint256 base, uint256 tokenId, string memory output) public pure returns (uint256){
         uint256 rando = uint(keccak256(abi.encodePacked(output, toString(tokenId)))) % 100;
@@ -193,7 +186,7 @@ contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice the weaponSmith, where you can upgrade your weapons send in the compatible erc20 token to upgrade
+     * @notice the weaponSmith, where you can upgrade your loot send in the compatible erc20 token to upgrade
      * @param  tokenId id of the token being upgraded
      * @param  amount amount of token to be sent to the weaponSmith to be upgraded
      */
@@ -207,48 +200,42 @@ contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
 
     function pluck(uint256 tokenId, string memory keyPrefix, string[] memory sourceArray, uint256 baseIndex) internal view returns (string memory) {
         // get the actual weapon class and greatness
-        uint256 rand = random(string(abi.encodePacked("WEAPON", toString(tokenId))));
+        uint256 rand = random(string(abi.encodePacked("CHEST", toString(tokenId))));
         string memory output = sourceArray[rand % sourceArray.length];
         uint256 greatness = rand % 21;
         uint256 stat;
-        if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Warhammer")))) {
+        if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Divine Robe")))) {
             stat = getScore(bases[0][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Quarterstaff")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Silk Robe")))) {
             stat = getScore(bases[1][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Maul")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Linen Robe")))) {
             stat = getScore(bases[2][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Mace")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Robe")))) {
             stat = getScore(bases[3][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Club")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Shirt")))) {
             stat = getScore(bases[4][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Katana")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Demon Husk")))) {
             stat = getScore(bases[5][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Falchion")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Dragonskin Armor")))) {
             stat = getScore(bases[6][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Scimitar")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Studded Leather Armor")))) {
             stat = getScore(bases[7][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Long Sword")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Hard Leather Armor")))) {
             stat = getScore(bases[8][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Short Sword")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Leather Armor")))) {
             stat = getScore(bases[9][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Ghost Wand")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Holy Chestplate")))) {
             stat = getScore(bases[10][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Grave Wand")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Ornate Chestplate")))) {
             stat = getScore(bases[11][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Bone Wand")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Plate Mail")))) {
             stat = getScore(bases[12][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Wand")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Chain Mail")))) {
             stat = getScore(bases[13][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Grimoire")))) {
+        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Ring Mail")))) {
             stat = getScore(bases[14][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Chronicle")))) {
-            stat = getScore(bases[15][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Tome")))) {
-            stat = getScore(bases[16][baseIndex], tokenId, keyPrefix);
-        } else if (keccak256(abi.encodePacked((output))) == keccak256(abi.encodePacked(("Book")))) {
-            stat = getScore(bases[17][baseIndex], tokenId, keyPrefix);
         }
-        if (baseIndex == 3){
+        if (baseIndex == 2){
             output = string(abi.encodePacked(keyPrefix, ": ", toString(stat)));
             return output;
         }
@@ -271,34 +258,30 @@ contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
         string[13] memory parts;
         parts[0] = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><style>.base { fill: white; font-family: serif; font-size: 14px; }</style><rect width="100%" height="100%" fill="black" /><text x="10" y="20" class="base">';
 
-        parts[1] = loot.getWeapon(tokenId);
+        parts[1] = loot.getChest(tokenId);
 
         parts[2] = '</text><text x="10" y="40" class="base">';
 
-        parts[3] = getAttack(tokenId);
+        parts[3] = getDefense(tokenId);
 
         parts[4] = '</text><text x="10" y="60" class="base">';
 
-        parts[5] = getDefense(tokenId);
+        parts[5] = getDurability(tokenId);
 
         parts[6] = '</text><text x="10" y="80" class="base">';
 
-        parts[7] = getDurability(tokenId);
+        parts[7] = getWeight(tokenId);
 
         parts[8] = '</text><text x="10" y="100" class="base">';
 
-        parts[9] = getWeight(tokenId);
+        parts[9] = getMagic(tokenId);
 
-        parts[10] = '</text><text x="10" y="120" class="base">';
-
-        parts[11] = getMagic(tokenId);
-
-        parts[12] = '</text></svg>';
+        parts[10] = '</text></svg>';
 
         string memory output = string(abi.encodePacked(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8]));
-        output = string(abi.encodePacked(output, parts[9], parts[10], parts[11], parts[12]));
+        output = string(abi.encodePacked(output, parts[9], parts[10]));
         
-        string memory json = Base64.encode(bytes(string(abi.encodePacked('{"name": "Weapon #', toString(tokenId), '", "description": "The Weaponsmith is open. Looters will be able to mint their weapons and reveal their underlying powers - attack, defense, durability, weight and magic. Mint your weapon, reveal your stats.", "image": "data:image/svg+xml;base64,', Base64.encode(bytes(output)), '"}'))));
+        string memory json = Base64.encode(bytes(string(abi.encodePacked('{"name": "Chest Armor #', toString(tokenId), '", "description": "The Weaponsmith is open. Looters will be able to mint their chest armor and reveal their underlying powers - defense, durability, weight and magic. Mint your chest armor, reveal your stats.", "image": "data:image/svg+xml;base64,', Base64.encode(bytes(output)), '"}'))));
         output = string(abi.encodePacked('data:application/json;base64,', json));
 
         return output;
@@ -342,25 +325,22 @@ contract LootWeapon is ERC721Enumerable, ReentrancyGuard, Ownable {
         return string(buffer);
     }
     
-    constructor() ERC721("Loot Weapon", "LWEAPON") Ownable() {
-        bases[0] = [800,350,850,800,0];
-        bases[1] = [200,400,350,200,0];
-        bases[2] = [400,250,550,400,0];
-        bases[3] = [500,250,550,400,0];
-        bases[4] = [300,150,400,300,0];
-        bases[5] = [950,250,700,150,0];
-        bases[6] = [650,150,400,150,0];
-        bases[7] = [700,200,500,200,0];
-        bases[8] = [750,250,600,250,0];
-        bases[9] = [400,150,400,150,0];
-        bases[10] = [50,50,550,50,800];
-        bases[11] = [50,50,400,50,700];
-        bases[12] = [50,50,350,50,650];
-        bases[13] = [50,50,400,50,600];
-        bases[14] = [50,50,50,25,850];
-        bases[15] = [15,50,50,15,0];
-        bases[16] = [100,100,50,50,0];
-        bases[17] = [50,50,50,25,0];
+    constructor() ERC721("Loot Chest Armor", "LChestArmor") Ownable() {
+        bases[0] = [250,100,100,800];
+        bases[1] = [150,80,80,0];
+        bases[2] = [100,80,80,0];
+        bases[3] = [50,100,100,0];
+        bases[4] = [50,50,50,0];
+        bases[5] = [800,700,500,300];
+        bases[6] = [900,800,600,400];
+        bases[7] = [450,250,300,0];
+        bases[8] = [400,200,300,0];
+        bases[9] = [350,150,200,0];
+        bases[10] = [700,650,450,650];
+        bases[11] = [600,550,400,0];
+        bases[12] = [550,400,350,0];
+        bases[13] = [450,350,300,0];
+        bases[14] = [400,300,250,0];
     }
 
 }

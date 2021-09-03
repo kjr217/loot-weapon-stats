@@ -14,5 +14,5 @@ def _flattener(contracts_to_flatten):
 
 
 def main():
-    contracts_to_flatten = [LootWeapon]
+    contracts_to_flatten = [LootChestArmor]
     _flattener(contracts_to_flatten)
